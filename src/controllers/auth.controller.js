@@ -2,6 +2,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import User from "../models/user.modal.js";
+import Blacklist from "../models/blacklist.modal.js";
 
 const registerUser = async (req, res) => {
 
@@ -124,7 +125,31 @@ const loginUser = async (req, res) => {
     }
 }
 
+const logoutUser = async (req, res) => {
+    try {
+        const token = req.cookies?.token;
+        console.log(`token is ${token}`)
+        if (token) {
+            await Blacklist.create({ token });
+        }
+        res.clearCookie("token");
+        return res.status(200).json({
+            message: "User logged out successfully",
+            success: true
+        });
+
+    } catch (error) {
+        const errorResponse = {
+            success: false,
+            message: "Failed to logout user",
+            error: error.message
+        }
+        return res.status(500).json(errorResponse);
+    }
+}
+
 export {
     registerUser,
-    loginUser
+    loginUser,
+    logoutUser
 }
