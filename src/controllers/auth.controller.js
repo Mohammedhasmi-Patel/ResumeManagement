@@ -148,8 +148,69 @@ const logoutUser = async (req, res) => {
     }
 }
 
+const getProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                success: false
+            });
+        }
+
+        const userDataResponse = {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+        }
+        return res.status(200).json({
+            message: "User profile",
+            success: true,
+            user: userDataResponse
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Failed to get user profile",
+            success: false,
+            error: error.message
+        });
+    }
+}
+
+const getMe = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                success: false
+            });
+        }
+
+        const userDataResponse = {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+        }
+        return res.status(200).json({
+            message: "User fetched successfully.",
+            success: true,
+            user: userDataResponse
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Failed to fetch user.",
+            success: false,
+            error: error.message
+        });
+    }
+}
 export {
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    getProfile,
+    getMe
 }
