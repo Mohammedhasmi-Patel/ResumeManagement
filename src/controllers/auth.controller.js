@@ -128,7 +128,6 @@ const loginUser = async (req, res) => {
 const logoutUser = async (req, res) => {
     try {
         const token = req.cookies?.token;
-        console.log(`token is ${token}`)
         if (token) {
             await Blacklist.create({ token });
         }

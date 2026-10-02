@@ -9,10 +9,12 @@ const authenticateUser = async (req, res, next) => {
             return res.status(401).json({ message: "Unauthorized, please login" })
         }
 
-        const decoded = await jwt.verify(token, process.env.JWT_SECRET);
-        if (await Blacklist.findOne({ token })) {
+        const isTokenBlackList = await Blacklist.findOne({ token });
+        if (isTokenBlackList) {
             return res.status(401).json({ message: "Unauthorized, please login" })
         }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         req.user = decoded;
         next();
