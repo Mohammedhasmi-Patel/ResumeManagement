@@ -1,0 +1,19 @@
+# Vercel Container Deployment
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Copy application source code
+COPY . .
+
+# Set environment
+ENV NODE_ENV=production
+
+# Server listens on PORT injected by Vercel (or fallback)
+EXPOSE 5000
+
+CMD ["node", "server.js"]
