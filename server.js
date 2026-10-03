@@ -10,14 +10,7 @@ app.get("/", (req, res) => {
     res.send("Hello World");
 });
 
-app.get("/invoke", async (req, res) => {
-    try {
-        const result = await invokeGemini();
-        res.send(result);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+
 app.listen(PORT, async () => {
     console.log(`Server is running on port ${PORT}`);
 });

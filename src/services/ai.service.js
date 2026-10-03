@@ -6,10 +6,9 @@ const ai = new GoogleGenAI();
 
 // Ensure these model strings exist in your Google AI Studio project
 const MODELS = [
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
     "gemini-3.8-flash",
-    "gemini-3.5-flash-lite"
+    "gemini-3.5-flash-lite",
+    "gemini-2.0-flash"
 ];
 
 const interviewReportSchema = z.object({
@@ -26,14 +25,14 @@ const interviewReportSchema = z.object({
     })),
     skillGaps: z.array(z.object({
         skill: z.string(),
-        severity: z.string()
+        severity: z.enum(["low", "medium", "high"]).describe("The severity level: low, medium, or high")
     })),
     preparationPlan: z.array(z.object({
         day: z.number(),
         focus: z.string(),
         tasks: z.array(z.string())
     })).describe("A day wise preparation plan for the candidate")
-})
+});
 
 export const generateInterviewReport = async ({ resume, selfDescription, jobDescription }) => {
     const prompt = `
@@ -46,22 +45,47 @@ export const generateInterviewReport = async ({ resume, selfDescription, jobDesc
     const schema = z.toJSONSchema(interviewReportSchema);
     delete schema.$schema;
 
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: schema
-        }
-    });
+    let lastError = null;
 
-    return JSON.parse(response.text);
+    for (const model of MODELS) {
+        try {
+            console.log(`[Gemini API] Attempting call with model: ${model}`);
+            const response = await ai.models.generateContent({
+                model: model,
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: schema
+                }
+            });
+
+            return JSON.parse(response.text);
+
+
+        } catch (error) {
+            console.warn(`[Gemini API] Model ${model} failed:`, error?.message || error);
+            lastError = error;
+            continue;
+        }
+    }
+
+    throw lastError || new Error("All model endpoints failed to process the request.");
 };
 
 export const invokeGemini = async (prompt = "Hello") => {
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt
-    });
-    return response.text;
-};
+    let lastError = null;
+    for (const model of MODELS) {
+        try {
+            const response = await ai.models.generateContent({
+                model: model,
+                contents: prompt
+            });
+            return response.text;
+        } catch (error) {
+            lastError = error;
+            continue;
+        }
+    }
+    throw lastError || new Error("All model endpoints failed to process the request.");
+};
+
