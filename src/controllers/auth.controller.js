@@ -4,6 +4,15 @@ import bcrypt from "bcryptjs";
 import User from "../models/user.modal.js";
 import Blacklist from "../models/blacklist.modal.js";
 
+const isProduction = process.env.NODE_ENV === "production";
+
+const cookieOptions = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    maxAge: 24 * 60 * 60 * 1000
+};
+
 const registerUser = async (req, res) => {
 
     try {
@@ -40,7 +49,7 @@ const registerUser = async (req, res) => {
             expiresIn: "1d"
         });
 
-        res.cookie("token", token);
+        res.cookie("token", token, cookieOptions);
         const userDataResponse = {
             id: user._id,
             username: user.username,
@@ -50,6 +59,7 @@ const registerUser = async (req, res) => {
         const response = {
             success: true,
             message: "User registered successfully",
+            token,
             user: userDataResponse
         }
 
@@ -100,7 +110,7 @@ const loginUser = async (req, res) => {
             expiresIn: "1d"
         });
 
-        res.cookie("token", token);
+        res.cookie("token", token, cookieOptions);
         const userDataResponse = {
             id: isUserExist._id,
             username: isUserExist.username,
@@ -110,6 +120,7 @@ const loginUser = async (req, res) => {
         const response = {
             success: true,
             message: "User logged in successfully",
+            token,
             user: userDataResponse
         }
 
@@ -131,7 +142,11 @@ const logoutUser = async (req, res) => {
         if (token) {
             await Blacklist.create({ token });
         }
-        res.clearCookie("token");
+        res.clearCookie("token", {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax"
+        });
         return res.status(200).json({
             message: "User logged out successfully",
             success: true
